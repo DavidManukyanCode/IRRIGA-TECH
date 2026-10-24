@@ -1,0 +1,801 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Irriga Tech</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Armenian:wght@400;500;600;700&family=Noto+Serif+Armenian:wght@500;600&display=swap">
+<style>
+/* Layout: light web app. White header with tabs; dashboard = field scene + plan on the left, action and readings on the right; one light look on purpose */
+:root{
+  color-scheme:light;
+  --bg:#F7F9F6; --surface:#FFFFFF; --soft:#EEF4EC; --line:#E1E8DE;
+  --ink:#17301F; --muted:#647469;
+  --green:#1F7A45; --green-2:#2E9A57; --leaf:#6AAE3A;
+  --water:#1E7FC0; --water-soft:#E4F0FA;
+  --warn:#B97E10; --warn-soft:#FBF1DC; --bad:#C4452D; --bad-soft:#FBE7E2; --good-soft:#E3F2E6;
+  --gold:#D9A93A; --silver:#A8B3BA; --bronze:#C08457;
+  --f-display:'Fraunces','Noto Serif Armenian',Georgia,serif;
+  --f-body:'Manrope','Noto Sans Armenian',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+h1,h2,h3{font-family:var(--f-display);font-weight:500;line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-0.01em}
+p{margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.num{font-variant-numeric:tabular-nums}
+.label{font-size:.75rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--water);outline-offset:2px;border-radius:6px}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;gap:18px;min-height:66px;flex-wrap:wrap;padding-block:8px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand img{width:42px;height:42px;border-radius:50%}
+.brand b{font-family:var(--f-body);font-weight:800;font-size:1.15rem;letter-spacing:.04em;color:var(--green)}
+.brand b span{color:var(--water)}
+.nav{display:flex;gap:4px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav a{white-space:nowrap;text-decoration:none;padding:8px 14px;border-radius:999px;font-weight:700;font-size:.9rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.nav a:hover{color:var(--ink);background:var(--soft)}
+.nav a[aria-current="page"]{color:var(--green);background:var(--good-soft)}
+.nav .dot{width:8px;height:8px;border-radius:50%;background:var(--bad)}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;flex-shrink:0;padding:3px;gap:2px}
+.lang button{border:0;background:transparent;padding:5px 11px;font-weight:800;font-size:.8rem;cursor:pointer;color:var(--muted);border-radius:999px}
+.lang button[aria-pressed="true"]{background:var(--green);color:#fff}
+@media (max-width:760px){.nav{order:3;flex-basis:100%}}
+
+.page{padding-block:28px 64px;display:grid;gap:24px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:20px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;cursor:pointer;font-weight:700;font-size:.85rem;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.seg{display:inline-flex;background:var(--soft);border-radius:999px;padding:4px;gap:2px}
+.seg button{border:0;background:transparent;border-radius:999px;padding:6px 14px;font-weight:700;font-size:.85rem;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(23,48,31,.12)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:14px;padding:12px 18px;font-weight:800;cursor:pointer;border:0;background:var(--green);color:#fff}
+.btn.light{background:#fff;color:var(--green)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:.75rem;font-weight:800}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.dry{background:var(--bad-soft);color:var(--bad)}
+.pill.watch{background:var(--warn-soft);color:var(--warn)}
+.pill.ok{background:var(--good-soft);color:var(--green)}
+.demo{font-size:.78rem;color:var(--muted)}
+
+/* dashboard */
+.hello{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap}
+.hello h1{font-size:clamp(1.8rem,3.6vw,2.5rem)}
+.dash{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:940px){.dash{grid-template-columns:1fr}}
+.col{display:grid;gap:20px;min-width:0}
+.scene-card{padding:0;overflow:hidden}
+.scene{position:relative}
+.scene canvas{display:block;width:100%}
+.scene .tag{position:absolute;top:14px;left:14px;background:rgba(255,255,255,.92);border-radius:12px;padding:8px 12px;font-weight:800;font-size:.85rem;display:flex;gap:8px;align-items:center;box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.scene .tag i{width:9px;height:9px;border-radius:50%;background:var(--water);animation:blink 1.6s infinite}
+.scene .tag.off i{background:var(--muted);animation:none}
+@keyframes blink{50%{opacity:.3}}
+.scene .reads{position:absolute;left:14px;right:14px;bottom:14px;display:flex;gap:8px;flex-wrap:wrap}
+.scene .reads span{background:rgba(255,255,255,.92);border-radius:999px;padding:6px 12px;font-size:.8rem;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.scene-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px;flex-wrap:wrap;border-top:1px solid var(--line)}
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto minmax(0,1.1fr);gap:10px;align-items:stretch}
+.flow .f{background:var(--soft);border-radius:16px;padding:12px 14px;display:grid;gap:2px;align-content:start}
+.flow .f b{font-size:1rem}
+.flow .f.res{background:var(--good-soft)}
+.flow .f.res b{color:var(--green)}
+.flow .arrow{display:grid;place-items:center;color:var(--muted);font-weight:800}
+@media (max-width:640px){.flow{grid-template-columns:1fr 1fr}.flow .arrow{display:none}.flow .f.res{grid-column:1/-1}}
+.action{background:linear-gradient(140deg,#1F7A45 0%,#2E9A57 60%,#3A9E7A 100%);color:#fff;border:0;display:grid;gap:10px}
+.action .label{color:rgba(255,255,255,.75)}
+.action h2{font-size:1.75rem;font-weight:500}
+.action .sub{color:rgba(255,255,255,.88)}
+.action .why{justify-self:start;background:rgba(255,255,255,.16);border:0;color:#fff;border-radius:10px;padding:7px 12px;font-weight:800;font-size:.82rem;cursor:pointer}
+.action ul{margin:0;padding-left:18px;display:grid;gap:4px;color:rgba(255,255,255,.9);font-size:.88rem}
+.moist{display:grid;gap:12px}
+.moist .big{font-family:var(--f-display);font-size:3rem;line-height:1}
+.moist .big small{font-size:1.2rem;color:var(--muted)}
+.mbars{display:flex;align-items:flex-end;gap:5px;height:56px}
+.mbars i{flex:1;border-radius:4px;background:var(--water-soft)}
+.mbars i.cur{background:var(--water)}
+.depths{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.depths div{background:var(--soft);border-radius:14px;padding:10px 12px}
+.depths b{font-size:1.25rem}
+.wx-row{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}
+.wx-d{border-radius:14px;padding:8px 4px;text-align:center;display:grid;gap:2px;justify-items:center;font-size:.8rem}
+.wx-d.hl{background:var(--water-soft)}
+.wx-d svg{width:28px;height:28px}
+.wx-d b{font-size:.85rem}
+.wx-note{margin-top:12px;font-size:.85rem;background:var(--water-soft);border-radius:12px;padding:10px 12px}
+.wx-now{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.wx-now .t{font-family:var(--f-display);font-size:2.2rem;line-height:1}
+.pool-row{display:flex;gap:14px;align-items:center}
+.ptank{width:54px;height:64px;border:2px solid var(--water);border-radius:12px;position:relative;overflow:hidden;flex-shrink:0}
+.ptank i{position:absolute;left:0;right:0;bottom:0;background:var(--water);opacity:.85}
+.chart svg{width:100%;height:auto;display:block}
+.call{display:grid;gap:12px}
+.call .row{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,.8fr) minmax(0,.8fr);gap:8px}
+@media (max-width:520px){.call .row{grid-template-columns:1fr}}
+.call input,.call select{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg);width:100%;min-width:0}
+.note{border-radius:14px;padding:12px 14px;background:var(--good-soft);font-size:.88rem}
+.script{background:var(--soft);border-radius:14px;padding:12px 14px;font-size:.88rem}
+
+/* guides */
+.guides{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:940px){.guides{grid-template-columns:1fr}}
+.vids{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+@media (max-width:640px){.vids{grid-template-columns:1fr}}
+.vid{display:grid;gap:8px}
+.poster{aspect-ratio:16/10;max-width:100%;border-radius:16px;position:relative;display:grid;place-items:center;overflow:hidden;background:linear-gradient(135deg,#DDEEDB,#CFE5F3)}
+.poster .play{width:44px;height:44px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.1)}
+.poster .soon{position:absolute;top:8px;left:8px;font-size:.68rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:#fff;color:var(--muted);padding:3px 8px;border-radius:999px}
+.poster .len{position:absolute;bottom:8px;right:8px;font-size:.72rem;font-weight:800;background:rgba(23,48,31,.7);color:#fff;padding:2px 7px;border-radius:6px}
+.vid b{font-size:.9rem}
+.tips{display:grid;gap:10px;margin-top:14px}
+.tip{display:flex;gap:10px;align-items:flex-start;font-size:.9rem}
+.tip i{width:26px;height:26px;border-radius:8px;background:var(--water-soft);color:var(--water);display:grid;place-items:center;font-style:normal;font-weight:800;flex-shrink:0;font-size:.8rem}
+
+/* leaderboard */
+.lb-head{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap}
+.lb-head h1{font-size:clamp(1.8rem,3.6vw,2.5rem)}
+.ctrls{display:flex;gap:10px;flex-wrap:wrap}
+.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:end;max-width:720px;margin:10px auto 0;width:100%}
+.pod{display:grid;justify-items:center;gap:8px;text-align:center}
+.av{border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;position:relative}
+.pod .av{width:64px;height:64px;font-size:1.2rem}
+.pod.first .av{width:80px;height:80px;font-size:1.45rem}
+.av .medal{position:absolute;bottom:-6px;right:-6px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;border:3px solid var(--bg);color:#fff;font-weight:800}
+.pod .nm{font-weight:800;font-size:.95rem;line-height:1.2}
+.pod .val{font-family:var(--f-display);font-size:1.4rem;color:var(--green)}
+.block{width:100%;border-radius:16px 16px 6px 6px;display:grid;place-items:start center;padding-top:10px;font-family:var(--f-display);font-size:2rem;color:rgba(23,48,31,.35);transition:height .5s}
+.pod.first .block{background:linear-gradient(180deg,#F4E3B4,#EFD48E);height:140px}
+.pod.second .block{background:linear-gradient(180deg,#E6EBEE,#D3DBE0);height:104px}
+.pod.third .block{background:linear-gradient(180deg,#F1DECF,#E5C6AD);height:80px}
+.pod.me .nm::after{content:" ★";color:var(--green)}
+.me-banner{display:flex;gap:14px;align-items:center;background:var(--good-soft);border-radius:18px;padding:14px 18px;flex-wrap:wrap}
+.me-banner b{font-family:var(--f-display);font-size:1.4rem;color:var(--green)}
+.ranks{display:grid;gap:8px}
+.rk{display:grid;grid-template-columns:34px 44px minmax(0,1fr) minmax(0,160px) 70px;gap:12px;align-items:center;padding:10px 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line)}
+.rk.me{border-color:var(--green);background:var(--good-soft)}
+.rk .n{font-weight:800;color:var(--muted);text-align:center}
+.rk .av{width:40px;height:40px;font-size:.85rem}
+.rk .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk .bar{height:8px;border-radius:4px;background:var(--soft);overflow:hidden}
+.rk .bar i{display:block;height:100%;background:var(--green);border-radius:4px;transition:width .5s}
+.rk .v{font-weight:800;text-align:right}
+.rk .chg{font-size:.75rem;font-weight:800}
+.up{color:var(--green)} .down{color:var(--bad)} .same{color:var(--muted)}
+@media (max-width:620px){.rk{grid-template-columns:28px 40px minmax(0,1fr) 64px}.rk .barcell{display:none}}
+
+/* notifications */
+.notif{display:grid;gap:10px;max-width:760px}
+.ngroup{font-weight:800;color:var(--muted);font-size:.85rem;margin-top:10px}
+.nitem{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:14px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 16px}
+.nitem .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center}
+.nitem .ic svg{width:22px;height:22px}
+.nitem b{display:block}
+.nitem .tm{font-size:.78rem;color:var(--muted);font-weight:700}
+.nitem.new{border-color:var(--water)}
+
+/* savings */
+.sv-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:20px}
+@media (max-width:900px){.sv-top{grid-template-columns:1fr}}
+.sv-big{font-family:var(--f-display);font-size:3rem;color:var(--green);line-height:1}
+.parts{display:grid;gap:12px;margin-top:16px}
+.part{display:grid;gap:5px}
+.part .row{display:flex;justify-content:space-between;font-size:.9rem}
+.part .tr{height:10px;border-radius:5px;background:var(--soft);overflow:hidden}
+.part .tr i{display:block;height:100%;border-radius:5px}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
+.kpi b{display:block;font-family:var(--f-display);font-size:1.6rem}
+.est{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:center}
+@media (max-width:760px){.est{grid-template-columns:1fr}}
+.est .inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.est label{font-size:.82rem;font-weight:700;display:grid;gap:5px}
+.est input,.est select{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg);width:100%;min-width:0}
+.est .out{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.est .out div{background:var(--soft);border-radius:16px;padding:14px}
+.est .out b{display:block;font-family:var(--f-display);font-size:1.45rem;color:var(--green)}
+footer{border-top:1px solid var(--line);padding-block:22px;font-size:.82rem;color:var(--muted);background:var(--surface)}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="#dashboard" aria-label="Irriga Tech"><img id="logo1" alt=""><b>IRRIGA <span>TECH</span></b></a>
+    <nav class="nav" aria-label="Main">
+      <a href="#dashboard" data-r="dashboard" data-i18n="nav_dash"></a>
+      <a href="#leaderboard" data-r="leaderboard" data-i18n="nav_lb"></a>
+      <a href="#notifications" data-r="notifications"><span class="dot" aria-hidden="true"></span><span data-i18n="nav_nt"></span></a>
+      <a href="#savings" data-r="savings" data-i18n="nav_sv"></a>
+    </nav>
+    <div class="lang" role="group" aria-label="Language">
+      <button id="l-en" aria-pressed="true">EN</button>
+      <button id="l-hy" aria-pressed="false">ՀՅ</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- DASHBOARD -->
+<section class="page" id="p-dashboard">
+  <div class="hello">
+    <div><div class="label" id="dateLine"></div><h1 data-i18n="hello"></h1></div>
+    <span class="demo" data-i18n="demo_line"></span>
+  </div>
+  <div class="dash">
+    <div class="col">
+      <div class="card scene-card">
+        <div class="scene" id="scene">
+          <canvas id="cv" aria-label="Field animation"></canvas>
+          <div class="tag" id="sceneTag"><i></i><span id="sceneTagT"></span></div>
+          <div class="reads" id="sceneReads"></div>
+        </div>
+        <div class="scene-bar">
+          <span class="small muted" data-i18n="scene_q"></span>
+          <div class="seg" id="sceneSeg">
+            <button data-m="water" aria-pressed="true" data-i18n="sc_today"></button>
+            <button data-m="rain" aria-pressed="false" data-i18n="sc_tue"></button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="label" data-i18n="how_plan"></div>
+        <div class="flow" style="margin-top:12px">
+          <div class="f"><span class="small muted" data-i18n="fl_soil"></span><b class="num">24%</b><span class="small muted" data-i18n="fl_soil_d"></span></div>
+          <div class="f"><span class="small muted" data-i18n="fl_wx"></span><b data-i18n="fl_wx_v"></b><span class="small muted" data-i18n="fl_wx_d"></span></div>
+          <div class="f"><span class="small muted" data-i18n="fl_crop"></span><b data-i18n="fl_crop_v"></b><span class="small muted" data-i18n="fl_crop_d"></span></div>
+          <div class="arrow">→</div>
+          <div class="f res"><span class="small muted" data-i18n="fl_plan"></span><b id="flowPlan"></b><span class="small muted" id="flowPlanSub"></span></div>
+        </div>
+      </div>
+      <div class="card chart">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div class="label" data-i18n="moist_week"></div><span class="small muted" data-i18n="moist_axis"></span></div>
+        <div id="mchart" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card action">
+        <div class="label" data-i18n="task_label"></div>
+        <h2 id="taskT"></h2>
+        <div class="sub" id="taskS"></div>
+        <button class="why" id="whyBtn" aria-expanded="false" data-i18n="why"></button>
+        <ul id="whyList" hidden><li data-i18n="why1"></li><li data-i18n="why2"></li><li data-i18n="why3"></li></ul>
+      </div>
+      <div class="card moist">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="label" data-i18n="soil_label"></div><span class="pill dry" data-i18n="st_dry"></span></div>
+        <div class="big num">24<small>%</small></div>
+        <div class="mbars" id="mbars"></div>
+        <div class="depths"><div><span class="small muted" data-i18n="d20"></span><br><b class="num">24%</b></div><div><span class="small muted" data-i18n="d40"></span><br><b class="num">29%</b></div></div>
+      </div>
+      <div class="card">
+        <div class="label" data-i18n="wx_label"></div>
+        <div class="wx-now" style="margin-top:10px"><span class="t num">17°</span><div class="small"><b id="wxCond"></b><br><span class="muted" data-i18n="wx_meta"></span></div></div>
+        <div class="wx-row" id="wxRow"></div>
+        <div class="wx-note" data-i18n="wx_note"></div>
+        <p class="demo" style="margin-top:8px" data-i18n="wx_sample"></p>
+      </div>
+      <div class="card">
+        <div class="label" data-i18n="pool_label"></div>
+        <div class="pool-row" style="margin-top:10px"><div class="ptank"><i style="height:64%"></i></div><div><b class="num" style="font-size:1.3rem">64%</b><p class="small muted" id="poolT"></p></div></div>
+      </div>
+      <div class="card call">
+        <div><div class="label" data-i18n="call_label"></div><p class="small muted" style="margin-top:4px" data-i18n="call_sub"></p></div>
+        <form id="callForm" style="display:grid;gap:10px">
+          <div class="row">
+            <input id="phone" type="tel" placeholder="+374 XX XXX XXX" aria-label="Phone" autocomplete="off">
+            <select id="ctime" aria-label="Time"><option>06:00</option><option selected>07:00</option><option>08:00</option></select>
+            <select id="clang" aria-label="Language"><option value="hy">Հայերեն</option><option value="en">English</option></select>
+          </div>
+          <button class="btn" type="submit" data-i18n="call_btn"></button>
+        </form>
+        <div class="note" id="callMsg" hidden aria-live="polite"></div>
+        <div class="script" id="script" hidden></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="guides">
+    <div class="card">
+      <div class="label" data-i18n="g_label"></div>
+      <div class="vids" id="vids"></div>
+    </div>
+    <div class="card">
+      <div class="label" data-i18n="t_label"></div>
+      <div class="tips"><div class="tip"><i>1</i><span data-i18n="tip1"></span></div><div class="tip"><i>2</i><span data-i18n="tip2"></span></div><div class="tip"><i>3</i><span data-i18n="tip3"></span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- LEADERBOARD -->
+<section class="page" id="p-leaderboard" hidden>
+  <div class="lb-head">
+    <div><div class="label" data-i18n="lb_village"></div><h1 data-i18n="lb_title"></h1><p class="muted" style="margin-top:6px" data-i18n="lb_sub"></p></div>
+    <div class="ctrls">
+      <div class="seg" id="segPeriod"><button data-v="wk" aria-pressed="true" data-i18n="p_wk"></button><button data-v="ss" aria-pressed="false" data-i18n="p_ss"></button></div>
+      <div class="seg" id="segMetric"><button data-v="w" aria-pressed="true" data-i18n="m_w"></button><button data-v="d" aria-pressed="false" data-i18n="m_d"></button></div>
+    </div>
+  </div>
+  <div class="podium" id="podium"></div>
+  <div class="me-banner" id="meBanner"></div>
+  <div class="ranks" id="ranks"></div>
+  <p class="demo" data-i18n="lb_note"></p>
+</section>
+
+<!-- NOTIFICATIONS -->
+<section class="page" id="p-notifications" hidden>
+  <div><div class="label" data-i18n="nav_nt"></div><h1 style="font-size:clamp(1.8rem,3.6vw,2.5rem)" data-i18n="nt_title"></h1></div>
+  <div class="notif" id="notif"></div>
+</section>
+
+<!-- SAVINGS -->
+<section class="page" id="p-savings" hidden>
+  <div><div class="label" data-i18n="nav_sv"></div><h1 style="font-size:clamp(1.8rem,3.6vw,2.5rem)" data-i18n="sv_title"></h1></div>
+  <div class="sv-top">
+    <div class="card">
+      <div class="label" data-i18n="sv_week"></div>
+      <div class="sv-big num" id="svWeek" style="margin-top:8px"></div>
+      <div class="parts" id="parts"></div>
+    </div>
+    <div class="card chart">
+      <div class="label" data-i18n="sv_chart"></div>
+      <div id="svChart" style="margin-top:10px"></div>
+    </div>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="card">
+    <div class="label" data-i18n="est_label"></div>
+    <p class="muted small" style="margin:4px 0 16px" data-i18n="est_sub"></p>
+    <div class="est">
+      <div class="inputs">
+        <label><span data-i18n="est_crop"></span><select id="eCrop"></select></label>
+        <label><span data-i18n="est_area"></span><input id="eArea" type="number" min="0.1" max="50" step="0.1" value="0.5" inputmode="decimal"></label>
+      </div>
+      <div class="out">
+        <div><span class="small muted" data-i18n="est_pay"></span><b class="num" id="ePay"></b></div>
+        <div><span class="small muted" data-i18n="est_water"></span><b class="num" id="eWater"></b></div>
+      </div>
+    </div>
+    <p class="demo" style="margin-top:12px" data-i18n="est_note"></p>
+  </div>
+</section>
+</main>
+<footer><div class="wrap" data-i18n="footer"></div></footer>
+
+<script>
+const LOGO = "data:image/jpeg;base64,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";
+document.getElementById('logo1').src = LOGO;
+
+const D = {
+en:{
+ nav_dash:"Dashboard",nav_lb:"Leaderboard",nav_nt:"Notifications",nav_sv:"Savings",
+ hello:"Good evening, Aram",demo_line:"Demo farm: Aram, tomatoes, 0.5 ha, Aknalich",
+ scene_q:"See how the weather changes the plan",sc_today:"Today",sc_tue:"Tuesday, rain",
+ tag_water:"Watering now · drip on",tag_rain:"Rain 5.2 mm · drip off",
+ r_soil:"Soil 24%",r_evap:"Evaporation 2.1 mm",r_rain:"Rain Tuesday",
+ r_soil2:"Soil 33% after rain",r_evap2:"Evaporation 0.9 mm",r_skip:"Watering skipped",
+ how_plan:"How today's plan was made",
+ fl_soil:"Soil sensor",fl_soil_d:"20 cm, refill at 25%",
+ fl_wx:"Weather",fl_wx_v:"Dry until Tue",fl_wx_d:"2.1 mm evaporation today",
+ fl_crop:"Crop",fl_crop_v:"Tomato",fl_crop_d:"fruiting, needs steady water",
+ fl_plan:"Plan",plan_v:"{d} min at {s}",plan_s:"your turn at the shared pool",
+ moist_week:"Soil moisture, last 7 days",moist_axis:"20 cm depth",refill:"refill point",
+ task_label:"Today's task",task:"Irrigate this evening",task_sub:"{d} minutes, {s} to {e}. Your turn at the shared pool.",
+ why:"Why this plan?",why1:"Soil at 20 cm is 24%, just below the 25% refill point",why2:"Crops will lose about 2.1 mm of water today",why3:"No real rain until Tuesday",
+ soil_label:"Soil moisture",st_dry:"Needs water",d20:"At 20 cm",d40:"At 40 cm",
+ wx_label:"Weather",wx_meta:"Humidity 52% · Wind 9 km/h",
+ wx_note:"Rain on Tuesday (5.2 mm), so Monday evening watering is skipped.",
+ wx_sample:"Sample forecast for the demo.",
+ c0:"Clear",c1:"Mostly clear",c2:"Partly cloudy",c3:"Cloudy",c61:"Light rain",
+ pool_label:"Shared pool",pool_t:"Enough for about 3 days. Next canal turn: Tuesday.",
+ call_label:"Get your plan by phone",call_sub:"An AI voice agent calls every morning and reads your plan.",
+ call_btn:"Call me every morning",
+ call_msg:"Demo: daily call at {t} in {l}. No real call is made from this page. Here is what you would hear:",
+ lang_hy:"Armenian",lang_en:"English",
+ g_label:"Short guides",soon:"Soon",
+ v1:"Drip vs furrow in 2 minutes",v2:"Fertigation basics",v3:"How to get the 50% subsidy",
+ t_label:"Tips this week",
+ tip1:"Water in the evening: less water evaporates before it reaches the roots.",
+ tip2:"Rinse the drip filter once a week so every plant gets the same amount.",
+ tip3:"Don't water before forecast rain. The plan already skips those days.",
+ lb_village:"Aknalich village",lb_title:"Leaderboard",lb_sub:"Who saved the most compared with the old way of watering.",
+ p_wk:"This week",p_ss:"This season",m_w:"Water saved",m_d:"Drams saved",
+ you:"You",me_rank:"You are #{r}",me_gap:"{n} is ahead by {g}. Keep the evening schedule to catch up.",me_top:"You are first. Great work.",
+ lb_note:"Joining the leaderboard is optional. Demo data.",
+ nt_title:"Notifications",today:"Today",yesterday:"Yesterday",
+ n1:"Low soil moisture",n1d:"Soil at 20 cm is 24%, below the 25% refill point.",
+ n2:"Rain expected Tuesday",n2d:"5.2 mm forecast. Monday evening watering will be skipped.",
+ n3:"Your turn at the pool",n3d:"Today {s} to {e}.",
+ n4:"You moved up to #2",n4d:"You saved 43% water this week.",
+ n5:"Watering complete",n5d:"46 minutes, 3.4 m³ used.",
+ n6:"High evaporation",n6d:"3.0 mm expected, so the plan added 6 minutes.",
+ n7:"Pool refilled",n7d:"Canal turn finished. Pool at 92%.",
+ sv_title:"Your savings",sv_week:"Saved this week",sv_chart:"Drams saved per week",
+ pt_w:"Water fee",pt_f:"Fertilizer",pt_p:"Pump electricity",
+ k1:"water saved this season",k2:"less fertilizer",k3:"saved this season",
+ est_label:"Thinking about drip on another field?",est_sub:"A quick estimate. The state reimburses 50% of the cost.",
+ est_crop:"Crop",est_area:"Area (ha)",est_pay:"You pay after the 50% subsidy",est_water:"Water saved per season",
+ est_note:"Based on Armenian research for the Ararat valley (Yedoyan, 2022), water fee 11 AMD per m³.",
+ wk:"W{n}",
+ footer:"Irriga Tech · Pitch demo, October 2026 · Farm, sensor, weather and village data are examples.",
+ tomato:"Tomato",cucumber:"Cucumber",apricot:"Apricot",grape:"Grape",potato:"Potato",watermelon:"Watermelon",
+ dn:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],dl:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+ months:["January","February","March","April","May","June","July","August","September","October","November","December"]
+},
+hy:{
+ nav_dash:"Գլխավոր",nav_lb:"Առաջատարներ",nav_nt:"Ծանուցումներ",nav_sv:"Խնայողություն",
+ hello:"Բարի երեկո, Արամ",demo_line:"Ցուցադրական ֆերմա՝ Արամ, լոլիկ, 0,5 հա, Ակնալիճ",
+ scene_q:"Տեսեք, թե ինչպես է եղանակը փոխում պլանը",sc_today:"Այսօր",sc_tue:"Երեքշաբթի, անձրև",
+ tag_water:"Ջրում է · կաթիլայինը միացված է",tag_rain:"Անձրև 5,2 մմ · կաթիլայինն անջատված է",
+ r_soil:"Հող՝ 24%",r_evap:"Գոլորշիացում՝ 2,1 մմ",r_rain:"Անձրև երեքշաբթի",
+ r_soil2:"Հող՝ 33% անձրևից հետո",r_evap2:"Գոլորշիացում՝ 0,9 մմ",r_skip:"Ջրումը բաց է թողնված",
+ how_plan:"Ինչպես կազմվեց այսօրվա պլանը",
+ fl_soil:"Հողի սենսոր",fl_soil_d:"20 սմ, ջրման շեմը՝ 25%",
+ fl_wx:"Եղանակ",fl_wx_v:"Չոր մինչև երեքշաբթի",fl_wx_d:"այսօր 2,1 մմ գոլորշիացում",
+ fl_crop:"Մշակաբույս",fl_crop_v:"Լոլիկ",fl_crop_d:"պտղաբերում է, պետք է կայուն ջուր",
+ fl_plan:"Պլան",plan_v:"{d} րոպե՝ {s}-ից",plan_s:"ընդհանուր ավազանից ձեր հերթն է",
+ moist_week:"Հողի խոնավությունը, վերջին 7 օր",moist_axis:"20 սմ խորություն",refill:"ջրման շեմ",
+ task_label:"Այսօրվա առաջադրանքը",task:"Ջրեք այս երեկո",task_sub:"{d} րոպե՝ {s}-ից {e}։ Ընդհանուր ավազանից ձեր հերթն է։",
+ why:"Ինչու՞ այս պլանը",why1:"Հողը 20 սմ-ում 24% է՝ մի փոքր ցածր 25% շեմից",why2:"Բույսերն այսօր կկորցնեն մոտ 2,1 մմ ջուր",why3:"Էական անձրև չկա մինչև երեքշաբթի",
+ soil_label:"Հողի խոնավություն",st_dry:"Ջուր է պետք",d20:"20 սմ-ում",d40:"40 սմ-ում",
+ wx_label:"Եղանակ",wx_meta:"Խոնավություն 52% · Քամի 9 կմ/ժ",
+ wx_note:"Երեքշաբթի անձրև է (5,2 մմ), ուստի երկուշաբթի երեկոյան ջրումը բաց է թողնվում։",
+ wx_sample:"Ցուցադրական կանխատեսում։",
+ c0:"Պարզ",c1:"Հիմնականում պարզ",c2:"Մասամբ ամպամած",c3:"Ամպամած",c61:"Թույլ անձրև",
+ pool_label:"Ընդհանուր ավազան",pool_t:"Բավական է մոտ 3 օրվա համար։ Ջրանցքի հաջորդ հերթը՝ երեքշաբթի։",
+ call_label:"Ստացեք պլանը զանգով",call_sub:"AI ձայնային օգնականը զանգում է ամեն առավոտ և կարդում ձեր պլանը։",
+ call_btn:"Զանգահարեք ինձ ամեն առավոտ",
+ call_msg:"Ցուցադրական տարբերակ։ Ամենօրյա զանգ՝ ժամը {t}-ին, {l}։ Այս էջից իրական զանգ չի կատարվում։ Ահա, թե ինչ կլսեք՝",
+ lang_hy:"հայերեն",lang_en:"անգլերեն",
+ g_label:"Կարճ ուղեցույցներ",soon:"Շուտով",
+ v1:"Կաթիլային և ակոսային ոռոգում՝ 2 րոպեում",v2:"Ֆերտիգացիայի հիմունքներ",v3:"Ինչպես ստանալ 50% սուբսիդիան",
+ t_label:"Այս շաբաթվա խորհուրդներ",
+ tip1:"Ջրեք երեկոյան. ավելի քիչ ջուր է գոլորշիանում, մինչև կհասնի արմատներին։",
+ tip2:"Շաբաթը մեկ անգամ լվացեք ֆիլտրը, որ բոլոր բույսերը նույն քանակով ջուր ստանան։",
+ tip3:"Մի ջրեք սպասվող անձրևից առաջ։ Պլանն արդեն բաց է թողնում այդ օրերը։",
+ lb_village:"Ակնալիճ գյուղ",lb_title:"Առաջատարներ",lb_sub:"Ով է ամենաշատը խնայել՝ նախկին ջրման եղանակի համեմատ։",
+ p_wk:"Այս շաբաթ",p_ss:"Այս սեզոն",m_w:"Խնայված ջուր",m_d:"Խնայված դրամ",
+ you:"Դուք",me_rank:"Դուք #{r}-ն եք",me_gap:"Առջևում՝ {n} (+{g})։ Պահպանեք երեկոյան գրաֆիկը՝ հասնելու համար։",me_top:"Դուք առաջինն եք։ Հիանալի է։",
+ lb_note:"Մասնակցությունը կամավոր է։ Ցուցադրական տվյալներ։",
+ nt_title:"Ծանուցումներ",today:"Այսօր",yesterday:"Երեկ",
+ n1:"Հողի ցածր խոնավություն",n1d:"Հողը 20 սմ-ում 24% է՝ 25% շեմից ցածր։",
+ n2:"Երեքշաբթի անձրև է սպասվում",n2d:"Կանխատեսվում է 5,2 մմ։ Երկուշաբթի երեկոյան ջրումը բաց կթողնվի։",
+ n3:"Ավազանից ձեր հերթն է",n3d:"Այսօր՝ {s}-ից {e}։",
+ n4:"Դուք բարձրացաք #2",n4d:"Այս շաբաթ խնայել եք ջրի 43%-ը։",
+ n5:"Ջրումն ավարտված է",n5d:"46 րոպե, օգտագործվել է 3,4 մ³։",
+ n6:"Բարձր գոլորշիացում",n6d:"Սպասվում է 3,0 մմ, ուստի պլանին ավելացվեց 6 րոպե։",
+ n7:"Ավազանը լցված է",n7d:"Ջրանցքի հերթն ավարտվեց։ Ավազանը՝ 92%։",
+ sv_title:"Ձեր խնայողությունը",sv_week:"Խնայված այս շաբաթ",sv_chart:"Խնայված դրամ ըստ շաբաթների",
+ pt_w:"Ջրի վարձ",pt_f:"Պարարտանյութ",pt_p:"Պոմպի էլեկտրաէներգիա",
+ k1:"խնայված ջուր այս սեզոն",k2:"պակաս պարարտանյութ",k3:"խնայված այս սեզոն",
+ est_label:"Մտածու՞մ եք կաթիլայինի մասին մեկ այլ դաշտի համար",est_sub:"Արագ գնահատում։ Պետությունը փոխհատուցում է ծախսի 50%-ը։",
+ est_crop:"Մշակաբույս",est_area:"Տարածք (հա)",est_pay:"Դուք վճարում եք 50% սուբսիդիայից հետո",est_water:"Խնայված ջուր մեկ սեզոնում",
+ est_note:"Հիմնված է Արարատյան դաշտի վերաբերյալ հայկական հետազոտության վրա (Եդոյան, 2022), ջրի վարձը՝ 11 դրամ 1 մ³-ի համար։",
+ wk:"Շ{n}",
+ footer:"Irriga Tech · Ցուցադրական տարբերակ, հոկտեմբեր 2026 · Ֆերմայի, սենսորների, եղանակի և գյուղի տվյալները օրինակներ են։",
+ tomato:"Լոլիկ",cucumber:"Վարունգ",apricot:"Ծիրան",grape:"Խաղող",potato:"Կարտոֆիլ",watermelon:"Ձմերուկ",
+ dn:["Կիր","Երկ","Երք","Չրք","Հնգ","Ուրբ","Շբթ"],dl:["Կիրակի","Երկուշաբթի","Երեքշաբթի","Չորեքշաբթի","Հինգշաբթի","Ուրբաթ","Շաբաթ"],
+ months:["հունվարի","փետրվարի","մարտի","ապրիլի","մայիսի","հունիսի","հուլիսի","օգոստոսի","սեպտեմբերի","հոկտեմբերի","նոյեմբերի","դեկտեմբերի"]
+}};
+
+const S = {lang:'en', mode:'water', period:'wk', metric:'w'};
+try { const l = localStorage.getItem('irriga_lang'); if (l === 'hy' || l === 'en') S.lang = l; } catch(e) {}
+const $ = id => document.getElementById(id);
+const t = (k, v) => { let s = D[S.lang][k] ?? D.en[k] ?? k; if (v) for (const x in v) s = s.split('{'+x+'}').join(v[x]); return s; };
+function nf(n, dec) { try { return new Intl.NumberFormat(S.lang==='hy'?'hy-AM':'en-US',{minimumFractionDigits:dec||0,maximumFractionDigits:dec||0}).format(n); } catch(e) { return Number(n).toFixed(dec||0); } }
+const amd = n => nf(Math.round(n)) + ' ֏';
+const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- data ---------- */
+const SLOT = {s:'17:55', e:'18:44', d:49};
+const DAYS = [{d:'2026-10-24',code:1,max:17,min:5,p:0},{d:'2026-10-25',code:2,max:16,min:6,p:0},{d:'2026-10-26',code:3,max:14,min:7,p:0.4},{d:'2026-10-27',code:61,max:12,min:6,p:5.2},{d:'2026-10-28',code:3,max:13,min:4,p:0.8}];
+const MOIST = [33,31,30,28,27,25,24];
+const FARMERS = [
+ {id:1,en:'Aram Petrosyan',hy:'Արամ Պետրոսյան',w:{wk:43,ss:41},d:{wk:4200,ss:67600},ch:1,c:'#1F7A45',me:true},
+ {id:2,en:'Anahit Grigoryan',hy:'Անահիտ Գրիգորյան',w:{wk:47,ss:44},d:{wk:5100,ss:71200},ch:0,c:'#1E7FC0'},
+ {id:3,en:'Hovhannes Mkrtchyan',hy:'Հովհաննես Մկրտչյան',w:{wk:39,ss:40},d:{wk:3800,ss:64100},ch:-1,c:'#7A5BC4'},
+ {id:4,en:'Lilit Sargsyan',hy:'Լիլիթ Սարգսյան',w:{wk:36,ss:38},d:{wk:3500,ss:58800},ch:2,c:'#C4452D'},
+ {id:5,en:'Gagik Avetisyan',hy:'Գագիկ Ավետիսյան',w:{wk:31,ss:35},d:{wk:4700,ss:69900},ch:-1,c:'#B97E10'},
+ {id:6,en:'Narine Hakobyan',hy:'Նարինե Հակոբյան',w:{wk:34,ss:30},d:{wk:2600,ss:39000},ch:3,c:'#2E9A8A'},
+ {id:7,en:'Armen Harutyunyan',hy:'Արմեն Հարությունյան',w:{wk:29,ss:33},d:{wk:3900,ss:60200},ch:-2,c:'#5A7D2E'},
+ {id:8,en:'Mariam Vardanyan',hy:'Մարիամ Վարդանյան',w:{wk:33,ss:36},d:{wk:3300,ss:52500},ch:0,c:'#C46A9A'},
+ {id:9,en:'Karen Martirosyan',hy:'Կարեն Մարտիրոսյան',w:{wk:28,ss:31},d:{wk:5200,ss:73500},ch:1,c:'#3C6FB0'},
+ {id:10,en:'Levon Abrahamyan',hy:'Լևոն Աբրահամյան',w:{wk:30,ss:29},d:{wk:3700,ss:48800},ch:-1,c:'#8A6A3D'},
+ {id:11,en:'Ani Minasyan',hy:'Անի Մինասյան',w:{wk:35,ss:32},d:{wk:2700,ss:41000},ch:1,c:'#D07A2E'},
+ {id:12,en:'Tigran Khachatryan',hy:'Տիգրան Խաչատրյան',w:{wk:27,ss:30},d:{wk:4100,ss:57300},ch:0,c:'#4E8C5C'}];
+const CROPS = [{id:'tomato',cost:1317500},{id:'cucumber',cost:981196},{id:'watermelon',cost:742609},{id:'potato',cost:1317500},{id:'apricot',cost:1002580},{id:'grape',cost:1175640}];
+const name = f => S.lang === 'hy' ? f.hy : f.en;
+const initials = f => name(f).split(' ').map(x => x[0]).join('').slice(0,2);
+const dayIdx = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d).getDay(); };
+const condKey = c => 'c' + (c >= 51 ? 61 : c);
+
+/* ---------- routing ---------- */
+const ROUTES = ['dashboard','leaderboard','notifications','savings'];
+function route() {
+  const h = (location.hash || '').slice(1), r = ROUTES.includes(h) ? h : 'dashboard';
+  ROUTES.forEach(x => { $('p-'+x).hidden = x !== r; });
+  document.querySelectorAll('.nav a').forEach(a => a.setAttribute('aria-current', a.dataset.r === r ? 'page' : 'false'));
+  window.scrollTo(0,0);
+  if (r === 'dashboard') scene.resize();
+}
+window.addEventListener('hashchange', route);
+
+function setLang(l) {
+  S.lang = l; try { localStorage.setItem('irriga_lang', l); } catch(e) {}
+  document.documentElement.lang = l;
+  $('l-en').setAttribute('aria-pressed', l === 'en'); $('l-hy').setAttribute('aria-pressed', l === 'hy');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.dataset.i18n); });
+  renderAll();
+}
+$('l-en').onclick = () => setLang('en');
+$('l-hy').onclick = () => setLang('hy');
+
+/* ---------- field scene (canvas) ---------- */
+const scene = (() => {
+  const cv = $('cv'), ctx = cv.getContext('2d');
+  let W = 0, H = 0, raf = 0, plants = [], drops = [], start = performance.now();
+  const rnd = (i) => { const x = Math.sin(i * 12.9898) * 43758.5453; return x - Math.floor(x); };
+  function resize() {
+    const w = cv.parentElement.clientWidth; if (!w) return;
+    W = w; H = Math.max(260, Math.min(420, Math.round(w * 0.52)));
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    build(); if (reduced) frame(performance.now());
+  }
+  function build() {
+    plants = []; const N = 9, hy = H * 0.4, vx = W * 0.5;
+    for (let r = 0; r < N; r++) {
+      const xb = -0.45 * W + r * (1.9 * W / (N - 1));
+      let s = 0.98, j = 0;
+      while (s > 0.06) { plants.push({r, s, xb, k: r * 50 + j, x: vx + (xb - vx) * s, y: hy + (H - hy) * s}); s *= 0.82; j++; }
+    }
+    plants.sort((a,b) => a.s - b.s);
+    drops = [];
+    for (let i = 0; i < 160; i++) drops.push({x: rnd(i+1) * 1.2 - 0.1, y: rnd(i+7), v: 0.9 + rnd(i+3) * 0.6, l: 10 + rnd(i+11) * 14});
+  }
+  function cloud(x, y, sc, col) {
+    ctx.fillStyle = col;
+    [[0,0,30,16],[24,-8,26,18],[50,0,30,15],[22,6,34,13]].forEach(e => { ctx.beginPath(); ctx.ellipse(x + e[0]*sc, y + e[1]*sc, e[2]*sc, e[3]*sc, 0, 0, Math.PI*2); ctx.fill(); });
+  }
+  function frame(now) {
+    const tm = (now - start) / 1000, rain = S.mode === 'rain', hy = H * 0.4, vx = W * 0.5;
+    // sky
+    const g = ctx.createLinearGradient(0, 0, 0, hy);
+    if (rain) { g.addColorStop(0, '#8C9AA6'); g.addColorStop(1, '#CBD4DA'); } else { g.addColorStop(0, '#F2B97E'); g.addColorStop(.45, '#F7D9A8'); g.addColorStop(1, '#F6EBD6'); }
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, hy + 2);
+    if (!rain) { // low evening sun
+      const sx = W * 0.78, sy = hy - 18;
+      const sg = ctx.createRadialGradient(sx, sy, 4, sx, sy, 110); sg.addColorStop(0, 'rgba(255,236,190,.95)'); sg.addColorStop(.25, 'rgba(255,214,150,.55)'); sg.addColorStop(1, 'rgba(255,214,150,0)');
+      ctx.fillStyle = sg; ctx.fillRect(sx - 120, sy - 120, 240, 240);
+      ctx.fillStyle = '#FFF2D2'; ctx.beginPath(); ctx.arc(sx, sy, 16, 0, Math.PI*2); ctx.fill();
+    }
+    // clouds
+    const cc = rain ? 'rgba(110,124,136,.9)' : 'rgba(255,248,240,.75)';
+    const sp = reduced ? 0 : (rain ? 9 : 4);
+    [[0.1,0.12,1.1],[0.55,0.06,0.8],[0.85,0.2,1.3],[0.32,0.24,0.7]].forEach((c,i) => {
+      const x = ((c[0] * (W + 300) + tm * sp * (i % 2 ? 1 : 1.4)) % (W + 300)) - 150;
+      cloud(x, H * c[1], c[2] * (W / 700), cc);
+    });
+    if (rain) { cloud(W*0.15, H*0.04, 1.6*(W/700), 'rgba(95,108,120,.9)'); cloud(W*0.6, H*0.02, 1.8*(W/700), 'rgba(95,108,120,.9)'); }
+    // hills
+    ctx.fillStyle = rain ? '#8FA593' : '#B9C9A0';
+    ctx.beginPath(); ctx.moveTo(0, hy); for (let x = 0; x <= W; x += 20) ctx.lineTo(x, hy - 18 - 14 * Math.sin(x / W * 5 + 1)); ctx.lineTo(W, hy); ctx.fill();
+    ctx.fillStyle = rain ? '#7E967F' : '#9DB585';
+    ctx.beginPath(); ctx.moveTo(0, hy); for (let x = 0; x <= W; x += 20) ctx.lineTo(x, hy - 6 - 8 * Math.sin(x / W * 8 + 3)); ctx.lineTo(W, hy); ctx.fill();
+    // soil
+    const sg2 = ctx.createLinearGradient(0, hy, 0, H);
+    if (rain) { sg2.addColorStop(0, '#7A6551'); sg2.addColorStop(1, '#4E3A2A'); } else { sg2.addColorStop(0, '#B79A78'); sg2.addColorStop(1, '#8A6646'); }
+    ctx.fillStyle = sg2; ctx.fillRect(0, hy, W, H - hy);
+    // ridges + drip lines
+    const N = 9;
+    for (let r = 0; r < N; r++) {
+      const xb = -0.45 * W + r * (1.9 * W / (N - 1)), bw = W * 0.045;
+      ctx.fillStyle = rain ? 'rgba(90,70,52,.55)' : 'rgba(160,128,96,.6)';
+      ctx.beginPath(); ctx.moveTo(xb - bw, H); ctx.lineTo(vx - bw * 0.02, hy); ctx.lineTo(vx + bw * 0.02, hy); ctx.lineTo(xb + bw, H); ctx.fill();
+      ctx.strokeStyle = 'rgba(30,30,30,.55)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(xb + bw * 0.35, H); ctx.lineTo(vx, hy); ctx.stroke();
+    }
+    // plants (far to near)
+    for (const p of plants) {
+      const sz = 46 * p.s * (H / 380), x = p.x, y = p.y;
+      if (!rain && p.s > 0.12) { // wet patch grows, ripple
+        const ph = (tm * 0.35 + rnd(p.k)) % 1, base = sz * 0.9;
+        ctx.fillStyle = 'rgba(60,38,22,.38)'; ctx.beginPath(); ctx.ellipse(x + sz*0.18, y + sz*0.05, base, base*0.32, 0, 0, Math.PI*2); ctx.fill();
+        if (!reduced && p.s > 0.3) { ctx.strokeStyle = `rgba(160,210,240,${0.6*(1-ph)})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(x + sz*0.18, y + sz*0.05, base*0.3 + base*0.7*ph, (base*0.3 + base*0.7*ph)*0.32, 0, 0, Math.PI*2); ctx.stroke(); }
+      }
+      // stem + leaves
+      ctx.strokeStyle = '#3B6B2C'; ctx.lineWidth = Math.max(1, sz * 0.06); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - sz * 0.9); ctx.stroke();
+      const sway = reduced ? 0 : Math.sin(tm * 1.3 + p.k) * sz * 0.03;
+      const shades = rain ? ['#2F5F28','#3C7333','#2A5523'] : ['#3E7D32','#55963F','#2F6B2A'];
+      for (let i = 0; i < 7; i++) {
+        const a = rnd(p.k * 7 + i) * Math.PI * 2, d = sz * (0.18 + rnd(p.k + i * 3) * 0.28);
+        ctx.fillStyle = shades[i % 3]; ctx.beginPath();
+        ctx.ellipse(x + Math.cos(a) * d + sway, y - sz * 0.75 + Math.sin(a) * d * 0.7, sz * 0.26, sz * 0.17, a, 0, Math.PI*2); ctx.fill();
+      }
+      if (p.s > 0.18) for (let i = 0; i < 3; i++) { if (rnd(p.k * 3 + i) > 0.55) { ctx.fillStyle = '#D9452B'; ctx.beginPath(); ctx.arc(x + (rnd(p.k+i)-0.5) * sz * 0.6 + sway, y - sz * (0.45 + rnd(p.k*2+i) * 0.3), sz * 0.09, 0, Math.PI*2); ctx.fill(); } }
+      // emitter drop
+      if (!rain && p.s > 0.35 && !reduced) {
+        const ph = (tm * 1.4 + rnd(p.k + 9)) % 1, ex = x + sz * 0.18, ey = y + sz * 0.02;
+        ctx.fillStyle = `rgba(120,190,235,${1 - ph})`; ctx.beginPath(); ctx.ellipse(ex, ey - sz * 0.08 + ph * sz * 0.08, sz * 0.035, sz * 0.05, 0, 0, Math.PI*2); ctx.fill();
+      }
+    }
+    // sensor stake on a near row
+    const sp2 = plants.filter(p => p.r === 5).sort((a,b) => b.s - a.s)[1];
+    if (sp2) {
+      const sz = 46 * sp2.s * (H / 380), x = sp2.x - sz * 0.75, y = sp2.y + sz * 0.05;
+      ctx.fillStyle = '#E9ECEF'; ctx.fillRect(x - 2, y - sz * 0.9, 4, sz * 0.9);
+      ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = '#9AA5AE'; ctx.lineWidth = 1; ctx.beginPath(); ctx.rect(x - sz * 0.14, y - sz * 1.1, sz * 0.28, sz * 0.22); ctx.fill(); ctx.stroke();
+      const on = reduced ? 1 : (Math.sin(tm * 3) > 0 ? 1 : .35);
+      ctx.fillStyle = `rgba(30,127,192,${on})`; ctx.beginPath(); ctx.arc(x, y - sz * 0.99, sz * 0.04, 0, Math.PI*2); ctx.fill();
+    }
+    // rain
+    if (rain) {
+      ctx.strokeStyle = 'rgba(225,235,245,.55)'; ctx.lineWidth = 1.2;
+      for (const d of drops) {
+        const y = ((d.y + (reduced ? 0 : tm * d.v)) % 1) * (H + 40) - 20, x = d.x * W - (y * 0.12);
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - d.l * 0.25, y + d.l); ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(200,215,230,.12)'; ctx.fillRect(0, 0, W, H);
+    } else {
+      ctx.fillStyle = 'rgba(255,190,120,.08)'; ctx.fillRect(0, 0, W, H);
+    }
+    if (!reduced) raf = requestAnimationFrame(frame);
+  }
+  function run() { cancelAnimationFrame(raf); if (reduced) frame(performance.now()); else raf = requestAnimationFrame(frame); }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) cancelAnimationFrame(raf); else run(); });
+  window.addEventListener('resize', resize);
+  return {resize, run, redraw: () => { if (reduced) frame(performance.now()); }};
+})();
+
+function renderSceneLabels() {
+  const rain = S.mode === 'rain';
+  $('sceneTag').className = 'tag' + (rain ? ' off' : '');
+  $('sceneTagT').textContent = rain ? t('tag_rain') : t('tag_water');
+  const r = rain ? [t('r_soil2'), t('r_evap2'), t('r_skip')] : [t('r_soil'), t('r_evap'), t('r_rain')];
+  $('sceneReads').innerHTML = r.map(x => `<span>${x}</span>`).join('');
+  document.querySelectorAll('#sceneSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === S.mode));
+}
+document.querySelectorAll('#sceneSeg button').forEach(b => b.onclick = () => { S.mode = b.dataset.m; renderSceneLabels(); scene.redraw(); });
+
+/* ---------- dashboard ---------- */
+function wxIcon(code) {
+  const sun = '<circle cx="20" cy="18" r="8" fill="#F5B82E"/><g stroke="#F5B82E" stroke-width="2.4" stroke-linecap="round"><path d="M20 4v3M20 29v3M6 18h3M31 18h3M10 8l2 2M28 8l-2 2"/></g>';
+  if (code === 0) return `<svg viewBox="0 0 40 40" aria-hidden="true">${sun}</svg>`;
+  if (code <= 2) return `<svg viewBox="0 0 40 40" aria-hidden="true">${sun}<path d="M16 34h16a6 6 0 0 0 0-12 8 8 0 0 0-15 2 5 5 0 0 0-1 10z" fill="#C9D4DC"/></svg>`;
+  if (code === 3) return '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M12 32h18a7 7 0 0 0 0-14 9 9 0 0 0-17 2 6 6 0 0 0-1 12z" fill="#B3C0CA"/></svg>';
+  return '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M12 27h18a7 7 0 0 0 0-14 9 9 0 0 0-17 2 6 6 0 0 0-1 12z" fill="#93A4B2"/><g stroke="#1E7FC0" stroke-width="2.4" stroke-linecap="round"><path d="M15 32l-2 4M22 32l-2 4M29 32l-2 4"/></g></svg>';
+}
+function moistChart() {
+  const w = 640, h = 170, L = 34, R = 620, T = 14, B = 140, lo = 20, hi = 36;
+  const X = i => L + i * (R - L) / 6, Y = v => B - (v - lo) / (hi - lo) * (B - T);
+  const dn = D[S.lang].dn, pts = MOIST.map((v,i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  let s = '';
+  for (const g of [20,25,30,35]) s += `<line x1="${L}" x2="${R}" y1="${Y(g)}" y2="${Y(g)}" stroke="var(--line)"/><text x="${L-6}" y="${Y(g)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${g}%</text>`;
+  s += `<rect x="${L}" y="${Y(25)}" width="${R-L}" height="${B-Y(25)}" fill="var(--bad-soft)" opacity=".6"/>`;
+  s += `<line x1="${L}" x2="${R}" y1="${Y(25)}" y2="${Y(25)}" stroke="var(--bad)" stroke-dasharray="5 5"/><text x="${R}" y="${Y(25)+16}" text-anchor="end" font-size="11" font-weight="700" fill="var(--bad)">${t('refill')} 25%</text>`;
+  s += `<polygon points="${L},${B} ${pts} ${R},${B}" fill="var(--water)" opacity=".1"/><polyline points="${pts}" fill="none" stroke="var(--water)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+  MOIST.forEach((v,i) => { s += `<circle cx="${X(i)}" cy="${Y(v)}" r="${i===6?6:3.5}" fill="${i===6?'var(--water)':'#fff'}" stroke="var(--water)" stroke-width="2"/>`; });
+  s += `<text x="${X(6)}" y="${Y(24)-12}" text-anchor="middle" font-size="13" font-weight="800" fill="var(--ink)">24%</text>`;
+  for (let i = 0; i < 7; i++) { s += `<text x="${X(i)}" y="${B+20}" text-anchor="middle" font-size="11" fill="var(--muted)">${dn[(dayIdx(DAYS[0].d) - 6 + i + 7) % 7]}</text>`; }
+  return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${t('moist_week')}">${s}</svg>`;
+}
+function renderDash() {
+  const today = DAYS[0], di = dayIdx(today.d), [y,m,d] = today.d.split('-').map(Number);
+  $('dateLine').textContent = S.lang === 'hy' ? `${D.hy.dl[di]}, ${D.hy.months[m-1]} ${d}` : `${D.en.dl[di]}, ${D.en.months[m-1]} ${d}`;
+  $('flowPlan').textContent = t('plan_v', {d: SLOT.d, s: SLOT.s});
+  $('flowPlanSub').textContent = t('plan_s');
+  $('taskT').textContent = t('task');
+  $('taskS').textContent = t('task_sub', {d: SLOT.d, s: SLOT.s, e: SLOT.e});
+  $('mchart').innerHTML = moistChart();
+  const hist = [62,58,55,52,48,44,41,38,36,33,31,30,28,27,25,24];
+  $('mbars').innerHTML = hist.map((v,i) => `<i class="${i===hist.length-1?'cur':''}" style="height:${v*1.5}%"></i>`).join('');
+  $('wxCond').textContent = t(condKey(today.code));
+  const dn = D[S.lang].dn;
+  $('wxRow').innerHTML = DAYS.map((x,i) => `<div class="wx-d ${x.p>=3?'hl':''}"><span class="muted">${i===0 ? t('today') : dn[dayIdx(x.d)]}</span>${wxIcon(x.code)}<b class="num">${x.max}°</b><span class="muted num">${x.p>=1 ? nf(x.p,1)+' mm' : '-'}</span></div>`).join('');
+  $('poolT').textContent = t('pool_t');
+  const V = [['v1','2:00'],['v2','3:10'],['v3','2:40']];
+  $('vids').innerHTML = V.map(v => `<div class="vid"><div class="poster"><span class="soon">${t('soon')}</span><div class="play"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M8 5l12 7-12 7z" fill="#1F7A45"/></svg></div><span class="len">${v[1]}</span></div><b>${t(v[0])}</b></div>`).join('');
+  renderSceneLabels();
+}
+$('whyBtn').onclick = () => { const l = $('whyList'); l.hidden = !l.hidden; $('whyBtn').setAttribute('aria-expanded', !l.hidden); };
+function script(lang) {
+  return lang === 'hy'
+   ? `Բարի լույս, Արամ։ Զանգում է Irriga Tech-ը։ Այսօր ջրեք լոլիկը ${SLOT.d} րոպե՝ ժամը ${SLOT.s}-ից։ Հողը 20 սանտիմետր խորության վրա 24 տոկոս խոնավ է։ Երեքշաբթի անձրև է սպասվում, ուստի երկուշաբթի երեկոյան ջրումը բաց կթողնենք։ Այս շաբաթ դուք խնայել եք մոտ 4200 դրամ։ Հաջող օր։`
+   : `Good morning, Aram. This is Irriga Tech. Today, water your tomatoes for ${SLOT.d} minutes, starting at ${SLOT.s}. Soil moisture at 20 centimeters is 24 percent. Rain is expected on Tuesday, so we will skip Monday evening. This week you saved about 4,200 drams. Have a good day.`;
+}
+$('callForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const lang = $('clang').value;
+  $('callMsg').textContent = t('call_msg', {t: $('ctime').value, l: t(lang === 'hy' ? 'lang_hy' : 'lang_en')}); $('callMsg').hidden = false;
+  $('script').textContent = '“' + script(lang) + '”'; $('script').hidden = false;
+  try { if ('speechSynthesis' in window) { const v = speechSynthesis.getVoices().find(x => (x.lang||'').toLowerCase().startsWith(lang)); if (v || lang === 'en') { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(script(lang)); if (v) u.voice = v; u.lang = lang === 'hy' ? 'hy-AM' : 'en-US'; u.rate = .95; speechSynthesis.speak(u); } } } catch(err) {}
+});
+
+/* ---------- leaderboard ---------- */
+const val = f => S.metric === 'w' ? f.w[S.period] : f.d[S.period];
+const fmtVal = v => S.metric === 'w' ? v + '%' : amd(v);
+function renderLB() {
+  const list = [...FARMERS].sort((a,b) => val(b) - val(a));
+  const top = list.slice(0,3), order = [[top[1],'second','#A8B3BA',2],[top[0],'first','#D9A93A',1],[top[2],'third','#C08457',3]];
+  $('podium').innerHTML = order.map(([f,cls,mc,n]) => `<div class="pod ${cls} ${f.me?'me':''}"><div class="av" style="background:${f.c}">${initials(f)}<span class="medal" style="background:${mc}">${n}</span></div><div class="nm">${name(f)}</div><div class="val num">${fmtVal(val(f))}</div><div class="block">${n}</div></div>`).join('');
+  const ri = list.findIndex(f => f.me), me = list[ri];
+  let msg;
+  if (ri === 0) msg = `<b>${t('me_rank',{r:1})}</b><span>${t('me_top')}</span>`;
+  else { const ab = list[ri-1], gap = val(ab) - val(me); msg = `<b>${t('me_rank',{r:ri+1})}</b><span>${t('me_gap',{g: S.metric==='w' ? gap + '%' : amd(gap), n: name(ab)})}</span>`; }
+  $('meBanner').innerHTML = `<div class="av" style="background:${me.c};width:46px;height:46px">${initials(me)}</div>${msg}`;
+  const max = val(list[0]);
+  $('ranks').innerHTML = list.slice(3).map((f,i) => {
+    const n = i + 4, ch = S.period === 'wk' ? (f.ch > 0 ? `<span class="chg up">▲ ${f.ch}</span>` : f.ch < 0 ? `<span class="chg down">▼ ${-f.ch}</span>` : '<span class="chg same">=</span>') : '';
+    return `<div class="rk ${f.me?'me':''}"><span class="n">${n}</span><div class="av" style="background:${f.c}">${initials(f)}</div><div style="min-width:0"><div class="nm">${name(f)}${f.me?' · '+t('you'):''}</div>${ch}</div><div class="barcell"><div class="bar"><i style="width:${(val(f)/max*100).toFixed(1)}%"></i></div></div><span class="v num">${fmtVal(val(f))}</span></div>`;
+  }).join('');
+  document.querySelectorAll('#segPeriod button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S.period));
+  document.querySelectorAll('#segMetric button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S.metric));
+}
+document.querySelectorAll('#segPeriod button').forEach(b => b.onclick = () => { S.period = b.dataset.v; renderLB(); });
+document.querySelectorAll('#segMetric button').forEach(b => b.onclick = () => { S.metric = b.dataset.v; renderLB(); });
+
+/* ---------- notifications ---------- */
+const IC = {
+ drop:'<path d="M12 3C8 8 5.5 11.5 5.5 15a6.5 6.5 0 0 0 13 0C18.5 11.5 16 8 12 3z" fill="currentColor"/>',
+ rain:'<path d="M7 15h10a4 4 0 0 0 0-8 5 5 0 0 0-9.6 1.4A3.5 3.5 0 0 0 7 15z" fill="currentColor"/><path d="M9 18l-1 2M13 18l-1 2M17 18l-1 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+ clock:'<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v4l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+ trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0zM6 5H4v2a3 3 0 0 0 3 3M18 5h2v2a3 3 0 0 1-3 3M10 15h4v3h-4zM8 20h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+ check:'<path d="M5 12l4 4 10-10" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
+ sun:'<circle cx="12" cy="12" r="4.5" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+ pool:'<rect x="4" y="5" width="16" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 13c3-2 5 2 8 0s5 2 8 0v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="currentColor"/>'};
+function renderNotif() {
+  const N = [
+   ['today'],
+   ['drop','var(--bad-soft)','var(--bad)','n1','n1d','06:10',1],
+   ['rain','var(--water-soft)','var(--water)','n2','n2d','07:00',1],
+   ['clock','var(--good-soft)','var(--green)','n3','n3d','07:05',0],
+   ['trophy','var(--warn-soft)','var(--warn)','n4','n4d','08:30',0],
+   ['yesterday'],
+   ['check','var(--good-soft)','var(--green)','n5','n5d','18:41',0],
+   ['sun','var(--warn-soft)','var(--warn)','n6','n6d','13:00',0],
+   ['pool','var(--water-soft)','var(--water)','n7','n7d','09:20',0]];
+  $('notif').innerHTML = N.map(n => n.length === 1 ? `<div class="ngroup">${t(n[0])}</div>` :
+   `<div class="nitem ${n[6]?'new':''}"><div class="ic" style="background:${n[1]};color:${n[2]}"><svg viewBox="0 0 24 24" aria-hidden="true">${IC[n[0]]}</svg></div><div><b>${t(n[3])}</b><p class="small muted">${t(n[4],{s:SLOT.s,e:SLOT.e})}</p></div><span class="tm">${n[5]}</span></div>`).join('');
+}
+
+/* ---------- savings ---------- */
+function renderSavings() {
+  $('svWeek').textContent = amd(4200);
+  const P = [['pt_f',2600,'var(--leaf)'],['pt_p',1400,'var(--warn)'],['pt_w',198,'var(--water)']];
+  $('parts').innerHTML = P.map(p => `<div class="part"><div class="row"><span>${t(p[0])}</span><b class="num">${amd(p[1])}</b></div><div class="tr"><i style="width:${(p[1]/2600*100).toFixed(1)}%;background:${p[2]}"></i></div></div>`).join('');
+  const v = [3100,3600,3900,4400,4100,3800,4600,4200], w = 640, h = 220, L = 46, R = 630, T = 18, B = 186, max = 5000;
+  const bw = (R - L) / v.length, Y = x => B - x / max * (B - T);
+  let s = '';
+  for (const g of [0,2500,5000]) s += `<line x1="${L}" x2="${R}" y1="${Y(g)}" y2="${Y(g)}" stroke="var(--line)"/><text x="${L-6}" y="${Y(g)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${nf(g)}</text>`;
+  v.forEach((x,i) => { const cx = L + i * bw + bw * 0.18, last = i === v.length - 1;
+    s += `<rect x="${cx.toFixed(1)}" y="${Y(x).toFixed(1)}" width="${(bw*0.64).toFixed(1)}" height="${(B-Y(x)).toFixed(1)}" rx="6" fill="${last?'var(--green)':'var(--good-soft)'}" stroke="${last?'none':'var(--green)'}" stroke-opacity=".25"><title>${amd(x)}</title></rect>`;
+    s += `<text x="${(cx+bw*0.32).toFixed(1)}" y="${B+18}" text-anchor="middle" font-size="11" fill="var(--muted)">${t('wk',{n:i+1})}</text>`; });
+  s += `<text x="${(L + 7*bw + bw*0.5).toFixed(1)}" y="${(Y(4200)-8).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="800" fill="var(--green)">${nf(4200)}</text>`;
+  $('svChart').innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${t('sv_chart')}">${s}</svg>`;
+  $('kpis').innerHTML = [['420 m³','k1'],['-24%','k2'],[amd(67600),'k3']].map(k => `<div class="kpi"><b class="num">${k[0]}</b><span class="small muted">${t(k[1])}</span></div>`).join('');
+  const cur = $('eCrop').value || 'tomato';
+  $('eCrop').innerHTML = CROPS.map(c => `<option value="${c.id}">${t(c.id)}</option>`).join(''); $('eCrop').value = cur;
+  est();
+}
+function est() {
+  const c = CROPS.find(x => x.id === $('eCrop').value) || CROPS[0];
+  let a = parseFloat(String($('eArea').value).replace(',', '.')); if (!isFinite(a) || a <= 0) a = 0.1; a = Math.min(a, 50);
+  $('ePay').textContent = amd(c.cost * a * 0.5);
+  $('eWater').textContent = nf((9573 - 3590) * a) + ' m³';
+}
+$('eCrop').addEventListener('change', est); $('eArea').addEventListener('input', est);
+
+function renderAll() { renderDash(); renderLB(); renderNotif(); renderSavings(); }
+
+$('clang').value = S.lang;
+setLang(S.lang);
+route();
+scene.resize();
+scene.run();
+</script>
+
+</body></html>
